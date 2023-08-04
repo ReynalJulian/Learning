@@ -1,3 +1,4 @@
+-- To get the big picture of the tables
 SELECT *
 FROM CovidCasesAndDeaths
 
@@ -38,9 +39,10 @@ ORDER by cnd.date
 -- Daily growth rate of new cases in Indonesia (Multiple Casts, LAG)
 SELECT location, date, CAST(total_cases AS int) AS totalcases, new_cases, 
 	CAST(new_cases/
-	LAG(
-		CAST(total_cases AS float),1) OVER (ORDER BY date) 
-	AS decimal(5,3)) as daily_growth
+		LAG(
+			CAST(total_cases AS float),1) OVER (ORDER BY date) 
+			AS decimal(5,3)) 
+	as daily_growth
 FROM CovidCasesAndDeaths
 WHERE location = 'Indonesia'
 ORDER by date
@@ -63,11 +65,11 @@ JOIN #latest_total_cases ltc
 ON cnd.location = ltc.location
 WHERE continent IS NOT NULL
 ORDER BY cnd.location
-
+-- To look at the temp table
 SELECT *
 FROM #latest_total_cases
 
--- Correlation of deaths per capita to gdp and HDI (Multiple Joins)
+-- Correlation of deaths per capita to country's GDP and HDI (Multiple Joins)
 SELECT cnd.continent, cnd.location, CAST(CAST(total_deaths AS float)/cnd.population AS decimal(8,8)) AS death_per_capita, dem.gdp_per_capita, dem.human_development_index
 FROM CovidCasesAndDeaths cnd
 INNER JOIN
@@ -87,7 +89,8 @@ ORDER BY cnd.continent, cnd.location
 -- Daily rolling percentage of vaccination rate by country
 WITH CTE AS
 (
-SELECT cnd.continent, cnd.location, cnd.date, cnd.population, tnv.new_vaccinations, SUM(CONVERT(float, tnv.new_vaccinations)) OVER(PARTITION BY cnd.location ORDER BY tnv.date) AS vaccination_accumulation
+SELECT cnd.continent, cnd.location, cnd.date, cnd.population, tnv.new_vaccinations, 
+	SUM(CONVERT(float, tnv.new_vaccinations)) OVER(PARTITION BY cnd.location ORDER BY tnv.date) AS vaccination_accumulation
 FROM CovidCasesAndDeaths cnd
 INNER JOIN CovidTestsAndVaccinations tnv
 ON cnd.date = tnv.date
@@ -110,16 +113,17 @@ WHERE dup <> 1
 
 -- Find latest death rate by country (Join with subquery)
 SELECT	cnd.location,
-		CAST(cnd.total_cases AS int) AS totalcases, 
-		CAST(cnd.total_deaths AS int) AS totaldeaths, 
-		CAST(
-				CAST(cnd.total_deaths AS float)/CAST(cnd.total_cases AS float)
-				AS decimal(5,3))
-		AS death_rate
+	CAST(cnd.total_cases AS int) AS totalcases, 
+	CAST(cnd.total_deaths AS int) AS totaldeaths, 
+	CAST(
+		CAST(cnd.total_deaths AS float)/CAST(cnd.total_cases AS float)
+		AS decimal(5,3))
+	AS death_rate
 FROM CovidCasesAndDeaths cnd
-INNER JOIN (SELECT	continent, location, MAX(date) as Max_Date
-					FROM CovidCasesAndDeaths
-					GROUP BY continent, location) AS Max_Date_Table
+INNER JOIN 	(SELECT continent, location, MAX(date) as Max_Date
+		FROM CovidCasesAndDeaths
+		GROUP BY continent, location) 
+		AS Max_Date_Table
 ON cnd.location = Max_Date_Table.location
 AND cnd.continent = Max_Date_Table.continent
 AND cnd.date = Max_Date
