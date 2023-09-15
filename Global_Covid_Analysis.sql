@@ -9,16 +9,16 @@ SELECT *
 FROM CovidTestsAndVaccinations
 
 -- Find total cases by country (SELECT, Aggregate Function)
-SELECT location, MAX(CAST(total_cases AS int)) country_total
+SELECT location, MAX(CAST(total_cases AS int)) country_total -- CAST since total_cases is classified as nvarchar.
 FROM CovidCasesAndDeaths
-WHERE continent IS NOT NULL
+WHERE continent IS NOT NULL -- IS NOT NULL because the location column also has aggregated continental data. We do not need them now.
 GROUP BY location
 ORDER BY location
 
 -- Find total deaths by region (Subquery)
 SELECT location, MAX(CAST(total_deaths AS int)) continent_total
 FROM CovidCasesAndDeaths
-WHERE continent IS NULL 
+WHERE continent IS NULL -- There are continental data in the location column.
 AND 
 location IN (SELECT DISTINCT continent FROM CovidCasesAndDeaths WHERE continent IS NOT NULL)
 GROUP BY location
@@ -29,10 +29,10 @@ SELECT cnd.date, SUM(cnd.new_cases) daily_cases, SUM(cnd.new_deaths) daily_death
 FROM CovidCasesAndDeaths cnd
 INNER JOIN CovidTestsAndVaccinations tnv
 ON cnd.date = tnv.date 
-AND cnd.location = tnv.location
+	AND cnd.location = tnv.location
 WHERE cnd.date >= '2021-01-01'
-AND cnd.date <= '2021-12-31'
-AND cnd.continent IS NOT NULL
+	AND cnd.date <= '2021-12-31'
+	AND cnd.continent IS NOT NULL
 GROUP by cnd.date
 ORDER by cnd.date
 
